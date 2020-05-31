@@ -4,4 +4,4 @@ all:
 view:
 	okular coling2020.pdf
 clean:
-	rm -rf *.{aux,bbl,blg,out,log}
+	rm -rf *.{aux,bbl,blg,out,log,gz,dvi}
