@@ -1,6 +1,7 @@
-all: #need to run this twice
+all:
 	pdflatex coling2020.tex
-bib:
-	bibtex coling2020.aux
-clean: 
+	pdflatex coling2020.tex
+view:
+	okular coling2020.pdf
+clean:
 	rm -rf *.{aux,bbl,blg,out,log}

@@ -1,8 +1,6 @@
 * Contents
 
 Makefile	Makefile for compling coling 2020.tex in pdflatex
-Do in this circle: make all -> make bib -> make all (multiple times
-until the pdf compiled without errors)
 README.txt	This file
 colig.bst		BibTeX `coling' style file
 coling2020.dotx	Microsoft Word template file for Coling 2020

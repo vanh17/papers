@@ -22,6 +22,21 @@
 \usepackage{times}
 \usepackage{url}
 \usepackage{latexsym}
+\renewcommand{\UrlFont}{\ttfamily\small}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{subcaption}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{microtype}
+
+% New command added by Hoang
+\newcommand\BibTeX{B\textsc{ib}\TeX}
+\newcommand{\argmax}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{max}}\;}
+\newcommand\footnoteref[1]{\protected@xdef\@thefnmark{\ref{#1}}\@footnotemark}
+\newcommand{\todo}[1]{\textcolor{red}{TODO: #1}}
+\newcommand{\comment}[1]{\textcolor{blue}{In Progress: #1}}
 
 
 
@@ -34,7 +49,7 @@
 % in the camera-ready version and ask you to change it back.
 
 
-\title{Instructions for COLING-2020 Proceedings}
+\title{AuSMeT: The Autocompletion for Simplifying Medical Text}
 
 \author{First Author \\
   Affiliation / Address line 1 \\
@@ -52,465 +67,246 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-  This document contains the instructions for preparing a paper submitted
-  to COLING-2020 or accepted for publication in its proceedings. The document itself
-  conforms to its own specifications, and is therefore an example of
-  what your manuscript should look like. These instructions should be
-  used for both papers submitted for review and for final versions of
-  accepted papers. Authors are asked to conform to all the directions
-  reported in this document.
+  The goal of text simplification is to transform difficult text into a version that is easier to understand and more broadly accessible.  In some domains, such as healthcare and medical, fully automated approaches cannot be used since the information must be accurately preserved.  In this paper, we introduce the autocompletion task for text simplification, which aims to assist human simplification by suggesting the next word to type when manually simplifying a text.  We compare two pre-trained neural language models (BERT and GPT-2) and show how the additional context of the sentence to be simplified can be incorporated to achieve significantly better results (20.5\% and 28.8\% absolute improvement, respectively).  The best model, GPT-2 with context, achieves a word prediction rate of 52\% on Wikipedia data.
+
 \end{abstract}
 
-\section{Credits}
-
-This document has been adapted from the instructions for  
-COLING-2018 proceedings compiled by Xiaodan Zhu and Zhiyuan Liu,
-which are, in turn, based on
-the instructions for
-COLING-2016 proceedings compiled by Hitoshi Isahara and Masao Utiyama,
-which are, in turn, based on
-the instructions for
-COLING-2014 proceedings compiled by Joachim Wagner, Liadh Kelly
-and Lorraine Goeuriot,
-which are, in turn, based on the instructions for earlier ACL proceedings,
-including 
-those for ACL-2014 by Alexander Koller and Yusuke Miyao,
-those for ACL-2012 by Maggie Li and Michael
-White, those for ACL-2010 by Jing-Shing Chang and Philipp Koehn,
-those for ACL-2008 by Johanna D. Moore, Simone Teufel, James Allan,
-and Sadaoki Furui, those for ACL-2005 by Hwee Tou Ng and Kemal
-Oflazer, those for ACL-2002 by Eugene Charniak and Dekang Lin, and
-earlier ACL and EACL formats. Those versions were written by several
-people, including John Chen, Henry S. Thompson and Donald
-Walker. Additional elements were taken from the formatting
-instructions of the {\em International Joint Conference on Artificial
-  Intelligence}.
-
 \section{Introduction}
-\label{intro}
 
-%
-% The following footnote without marker is needed for the camera-ready
-% version of the paper.
-% Comment out the instructions (first text) and uncomment the 8 lines
-% under "final paper" for your variant of English.
-% 
-\blfootnote{
-    %
-    % for review submission
-    %
-    \hspace{-0.65cm}  % space normally used by the marker
-    Place licence statement here for the camera-ready version. See
-    Section~\ref{licence} of the instructions for preparing a
-    manuscript.
-    %
-    % % final paper: en-uk version 
-    %
-    % \hspace{-0.65cm}  % space normally used by the marker
-    % This work is licensed under a Creative Commons 
-    % Attribution 4.0 International Licence.
-    % Licence details:
-    % \url{http://creativecommons.org/licenses/by/4.0/}.
-    % 
-    % % final paper: en-us version 
-    %
-    % \hspace{-0.65cm}  % space normally used by the marker
-    % This work is licensed under a Creative Commons 
-    % Attribution 4.0 International License.
-    % License details:
-    % \url{http://creativecommons.org/licenses/by/4.0/}.
-}
+Text simplification (TS) is the process of modifying the words and structure of a text while preserving the content to make the information in the text more broadly accessible \cite{shardlow2014survey}.  Most research in text simplification has focused on fully automated \cite{zhu10,coster2011learning,xu2016optimizing, zhang2017sentence,nishihara2019controllable}.  In some domains, e.g., medicine or healthcare, using fully-automated text simplifications is not appropriate since it is critical that the information gets preserved correctly during the simplification process. Instead of fully-automated approaches, support tools such as editors are better suited to generate simplifications more efficiently and with higher quality \cite{kloehn2018jmir}.
 
-The following instructions are directed to authors of papers submitted
-to COLING-2020 or accepted for publication in its proceedings. All
-authors are required to adhere to these specifications. Authors are
-required to provide a Portable Document Format (PDF) version of their
-papers. \textbf{The proceedings are designed for printing on A4
-  paper.}
+Autocompletion tools suggest one or more words as the user types that could follow what has been typed so far.  Autocompletion has been used in a range of applications including web queries \cite{cai2016survey}, database queries \cite{khoussainova2010snipsuggest}, texting \cite{dunlop2000predictive}, and e-mail composition \cite{dai2019gmail}. In this paper, we explore autocompletion for text simplification.  In contrast to most autocomplete applications, for text simplification, in addition to the text that is being typed, we also have the additional context of the content being simplified.  Our work is most similar to interactive machine translation tools where a user translating a foreign sentence is given guidance as they type \cite{green-etal-2014-human}.
 
-Authors from countries in which access to word-processing systems is
-limited should contact the publication co-chairs
-Derek F. Wong (\texttt{derekfw@umac.mo}), Yang Zhao (\texttt{yang.zhao@nlpr.ia.ac.cn}) and
-Liang Huang (\texttt{liang.huang.sh@gmail.com})
-as soon as possible.
+In this paper, we examine the autocompletion task for sentence-level text simplification: given a difficult sentence that a user is trying to simplify and the simplification typed so far, the goal is to suggest the next word to follow what has been typed.  Figure \ref{fig:example} shows an example difficult sentence along with the simplification that the user has typed so far.  The task is to predict the next word to assist in finishing the simplification, in this case a verb like ``take'', which might be continued to a partial simplification of ``take place at the Chapel''.
 
-We may make additional instructions available at \url{http://coling2020.org/}. Please check
-this website regularly.
+\begin{figure}
+    \centering
+    \scalebox{0.9}{%
+    \begin{tabular}{l l}
+    \toprule
+    Difficult & The Chapel is actively used as a place of\\
+    sentence & worship and also for some concerts and\\
+     & college events. \rule[-2ex]{0pt}{0pt} \\ 
+    \hline
+    Typed &  Concerts and college events $\rule{1cm}{0.15mm}$ \rule{0pt}{3ex} \\
+    \bottomrule
+    \end{tabular}}
+    \caption{An example text simplification autocompletion task.  The user is simplifying the difficult sentence on top and has typed the words on the bottom so far.}
+    \label{fig:example}
+    \vspace{-0.15in}
+\end{figure}
+
+We make two main contributions.  First, we introduce the autocompletion task for sentence simplification and provide an initial analysis based on a number of recent models.  Second, we show how the additional context of the difficult sentence can be integrated into these models to improve the quality of the suggestions made.  Using the context of the difficult sentence significantly improves the prediction quality of the autocomplete methods.
 
 
-\section{General Instructions}
+\section{Text Simplification Autocomplete}
 
-Manuscripts must be in single-column format. {\bf Type single-spaced.}  Start all
-pages directly under the top margin. See the guidelines later
-regarding formatting the first page. The lengths of manuscripts
-should not exceed the maximum page limit described in Section~\ref{sec:length}.
-Do not number the pages.
+Given a difficult sentence that a user is trying to simplify, $d_1 d_2 ... d_m$, and the simplification typed so far, $s_1 s_2 ... s_i$, the autocompletion task is to suggest word $s_{i+1}$.   We examined two recent neural models that utilize the Transformer network \cite{vaswani2017attention}: BERT \cite{devlin2018bert} and GPT-2 \cite{radford2019language}.  The two models are state-of-the-art neural language representation models that have performed well in a range of applications.
+
+To understand the benefit of the context of the difficult sentence, we compare models that do not use context, i.e., predict only based on $s_1 s_2 ... s_i$, and context-aware versions that incorporate the difficult sentence into the prediction.
 
 
-\subsection{Electronically-available Resources}
+%We view this problem as a language modeling problem and explored three different approaches, an $n$-gram language model and two pre-trained neural language models.   The neural language models allow for more context to be takent into account when making predictions and allow for us to incorporate the additional context of the difficult sentence.
 
-We strongly prefer that you prepare your PDF files using \LaTeX{} with
-the official COLING 2020 style file (coling2020.sty) and bibliography style
-(acl.bst). These files are available in coling2020.zip 
-at \url{http://coling2020.org/}.
-You will also find the document
-you are currently reading (coling2020.pdf) and its \LaTeX{} source code
-(coling2020.tex) in coling2020.zip. 
+\subsection{BERT}
 
-You can alternatively use Microsoft Word to produce your PDF file. In
-this case, we strongly recommend the use of the Word template file
-(coling2020.dotx) in coling2020.zip. If you have an option, we
-recommend that you use the \LaTeX2e{} version. If you will be
-  using the Microsoft Word template, you must anonymise
-  your source file so that the pdf produced does not retain your
-  identity.  This can be done by removing any personal information
-from your source document properties.
+%Neural language models use neural networks, often with many layers, to predict the likelihood of the next word given the context (and, in some cases, e.g., transformer models, actually predict the next word).  
+%Unlike $n$-gram language models which are restricted to a fixed context, neural models use either recurrent neural networks \cite{mikolov2010recurrent}, Transformer networks, or other similar network configurations that build up an encoding of the context of the previous words and are therefore not limited to a fixed context window. 
 
+BERT (Bidirectional Encoder Representations from Transformers) is a method for learning language representations using bidirectional training.  The main advantage of BERT is that it uses a masked approach to train the model where some of the words in the training data are replaced with a [MASK] token. The model then attempts to predict the original value of the masked words based on the context provided by the other, non-masked words in the sequence.  Unlike left-to-right or right-to-left sequential models, BERT can use context both before and after the word to be predicted.  BERT has been shown to produce state-of-the-art results in a wide range of generation and classification applications \cite{devlin2018bert}.
 
+We use the original BERT pre-trained model, which was trained on the BooksCorpus \cite{zhu2015aligning} and English Wikipedia. To apply the model without context, we predict the masked word for the input ``$s_1 s_2 ... s_i \mbox{[MASK]} .$''. For the context-aware version, we add the context of the difficult sentence
+``$d_1 d_2 ... d_m. s_1 s_2 ... s_i \mbox{[MASK]} .$''. This biases the prediction to words related to those found in the encoded context from difficult sentences.
 
-\subsection{Format of Electronic Manuscript}
-\label{sect:pdf}
+BERT is a pre-trained model designed to be fine-tuned for particular applications. For the text simplification autocompletion task, we fine-tuned BERT on a corpus of sentence-aligned difficult concatenated with the corresponding simple sentences. We used Transformer Neural Networks to fine-tune the pre-trained BERT language model\footnote{\url{https://github.com/huggingface/transformers/tree/master/examples/}} on this data. Since, our task is to predict the next word in the simple sentence, we mask out each word in the simple sentence portion and then predict that word.
 
-For the production of the electronic manuscript you must use Adobe's
-Portable Document Format (PDF). PDF files are usually produced from
-\LaTeX{} using the \textit{pdflatex} command. If your version of
-\LaTeX{} produces Postscript files, you can convert these into PDF
-using \textit{ps2pdf} or \textit{dvipdf}. On Windows, you can also use
-Adobe Distiller to generate PDF.
+%\comment{This still needs to be clarified better.}
 
-Please make sure that your PDF file includes all the necessary fonts
-(especially tree diagrams, symbols, and fonts for non-Latin characters). 
-When you print or create the PDF file, there is usually
-an option in your printer setup to include none, all or just
-non-standard fonts.  Please make sure that you select the option of
-including ALL the fonts. \textbf{Before sending it, test your PDF by
-  printing it from a computer different from the one where it was
-  created.} Moreover, some word processors may generate very large PDF
-files, where each page is rendered as an image. Such images may
-reproduce poorly. In this case, try alternative ways to obtain the
-PDF. One way on some systems is to install a driver for a postscript
-printer, send your document to the printer specifying ``Output to a
-file'', then convert the file to PDF.
+\subsection{GPT-2} 
 
-It is of utmost importance to specify the \textbf{A4 format} (21 cm
-x 29.7 cm) when formatting the paper. When working with
-{\tt dvips}, for instance, one should specify {\tt -t a4}.
+Like BERT, GPT-2 is also based on the Transformer network, but uses left-to-right training and prediction. In each layer, GPT-2 has 12 independent attention mechanisms, called ``heads'', and the overall model contains 12 layers which can capture up to 144 different attention patterns.  We use the publicly released model\footnote{\url{https://github.com/openai/gpt-2}}, which has 1.5B model parameters and is trained on web text.  Since GPT-2 is a traditional left-to-right model, for the context unaware version we simply predict $s_{i+1}$ based on $s_1 s_2 ... s_i$.  Like BERT, to incorporate the context of the difficult sentence, we prepend it to the simplified text typed so far and then predict $s_{i+1}$.  We did not do any fine-tuning for GPT-2.
 
-If you cannot meet the above requirements
-for the
-production of your electronic submission, please contact the
-publication co-chairs as soon as possible.
+\section{Experiments} \label{sec:results}
 
+We introduce a new task, text simplification autocomplete, which relies on a parallel corpus of difficult and simple sentences.  Given a difficult sentence and the the first $i$ words of the simple sentence, the goal is to predict the $i+1^{th}$ simple word.  We provide the first results on this task using BERT and GPT-2, with and without context, as well as an trigram language model baseline.
 
-\subsection{Layout}
-\label{ssec:layout}
+\subsection{Experimental setup}
 
-Format manuscripts with a single column to a page, in the manner these
-instructions are formatted. The exact dimensions for a page on A4
-paper are:
+To evaluate the quality of the different models, we used the Simple Wikipedia parallel corpus \cite{kauchak2013improving}, which contains 167K pairs of sentences, with one sentence from English Wikipedia and a corresponding sentence from Simple English Wikipedia.  We used 70\% of the sentence for training, 15\% for development, and 15\% for testing.
 
-\begin{itemize}
-\item Left and right margins: 2.5 cm
-\item Top margin: 2.5 cm
-\item Bottom margin: 2.5 cm
-\item Width: 16.0 cm
-\item Height: 24.7 cm
-\end{itemize}
+As an additional baseline that does not use context, we trained a trigram language model with Kneser-Ney smoothing using the SRILM toolkit \cite{stolcke2002srilm}.  The model was trainined on the simple sentences from the training portion of the dataset and predicts $s_{i+1}$ as the word with the highest probability given the previous two words, i.e., $argmax_{s_{i+1}}\mbox{ } p(s_{i+1}| s_i s_{i-1})$.
 
-\noindent Papers should not be submitted on any other paper size.
-If you cannot meet the above requirements for
-the production of your electronic submission, please contact the
-publication co-chairs above as soon as possible.
+The BERT fine-tuning was done with a
+batch-size of 8, 8 epochs, and a learning rate of $5e^{-5}$. Early stopping was used based on the second time a decrease in the accuracy was seen.
 
+To evaluate the models, we calculated how well the models predicted the next word in a test sentence, given the previous words.  A simple test sentence of length $n$, $s_1 s_2 ... s_n$, would result in $n-1$ predictions, i.e., predict $s_2$ given $s_1$, predict $s_3$ given $s_1 s_2$, etc.  For example, Figure \ref{fig:testexample} shows a difficult sentence from English Wikipedia and the corresponding simplification from Simple English Wikipedia.  Given this test example, we generate six prediction tasks, one for each word in the simple sentence after the first word.  Figure \ref{fig:testing} shows these six test prediction tasks.  For the context-aware approaches, they also incorporated the difficult sentence. We measured the performance of a system using accuracy based on the number of predictions that exactly matched the next word in the corpus.  The test corpus contained 25K sentence pairs resulting in a total of 696K individual word predictions.
 
-\subsection{Fonts}
+\begin{figure}
+    \centering
+    \scalebox{0.9}{%
+    \begin{tabular}{l l}
+    \toprule
+    Difficult & The Saxons built Banbury on the west \\
+    sentence & bank of the River Cherwell. \rule[-2ex]{0pt}{0pt} \\ 
+    \hline
+    Simple & Banbury is part of the Cherwell district. \rule{0pt}{3ex}\\
+    sentence &  \\
+    \bottomrule
+    \end{tabular}}
+    \caption{An example sentence pair from the English Wikipedia corpus.}
+    \label{fig:testexample}
+\end{figure}
 
-For reasons of uniformity, Adobe's {\bf Times Roman} font should be
-used. In \LaTeX2e{} this is accomplished by putting
+\begin{figure}
+\centering
+\scalebox{0.9}{%
+\begin{tabular}{ll}
+\toprule \textbf{Typed so far} & \textbf{Predict} \\
+\midrule
+Banbury & is \\
+Banbury is & part \\
+Banbury is part & of \\
+Banbury is part of & the \\
+Banbury is part of the & Cherwell \\
+Banbury is part of the Cherwell & district \\
+\bottomrule
+\end{tabular}}
+\caption{The resulting prediction tasks that are generated from the example in Figure \ref{fig:testexample}.}
+\label{fig:testing}
+\vspace{-2mm}
+\end{figure}
 
-\begin{quote}
-\begin{verbatim}
-\usepackage{times}
-\usepackage{latexsym}
-\end{verbatim}
-\end{quote}
-in the preamble. If Times Roman is unavailable, use {\bf Computer
-  Modern Roman} (\LaTeX2e{}'s default).  Note that the latter is about
-  10\% less dense than Adobe's Times Roman font.
-
-The {\bf Times New Roman} font, which is configured for us in the
-Microsoft Word template (coling2020.dotx) and which some Linux
-distributions offer for installation, can be used as well.
-
-\begin{table}[h]
-\begin{center}
-\begin{tabular}{|l|rl|}
-\hline \bf Type of Text & \bf Font Size & \bf Style \\ \hline
-paper title & 15 pt & bold \\
-author names & 12 pt & bold \\
-author affiliation & 12 pt & \\
-the word ``Abstract'' & 12 pt & bold \\
-section titles & 12 pt & bold \\
-document text & 11 pt  &\\
-captions & 11 pt & \\
-sub-captions & 9 pt & \\
-abstract text & 11 pt & \\
-bibliography & 10 pt & \\
-footnotes & 9 pt & \\
-\hline
-\end{tabular}
-\end{center}
-\caption{\label{font-table} Font guide. }
+\begin{table}[t]
+\centering
+\scalebox{0.87}{%
+\begin{tabular}{c c c }
+\toprule
+\textbf {Model} &\textbf{No Context} & \textbf {Context-Aware}\\ 
+\midrule
+trigram & 13\% & -- \\
+\midrule
+BERT & 21.5\% & 42\% \\
+\midrule
+%3 & RoBERTa & 22\% & 43\% \\
+%\midrule
+GPT-2 & 23.2\% & 52\% \\
+\bottomrule
+\end{tabular}}
+\caption{Accuracy for the different models on the Wikipedia test corpus of 25K sentence pairs.  Context-aware approaches included the context of the difficult sentence when predicting.} 
+\label{tab:results}
+\vspace{-2mm}
 \end{table}
 
-\subsection{The First Page}
-\label{ssec:first}
+\subsection{Prediction performance}
+Table \ref{tab:results} shows the results for the five different variants (trigram model, BERT and GPT-2 with and without context).  Both neural models significantly outperform the trigram language model; they have been trained on larger corpora and have access to more context allowing for better predictions.  Without context, GPT-2 performs slightly better than BERT, with an absolute improvement of 1.7\%.  To put these accuracy numbers in perspective, in an actual autocomplete task, without context, both BERT and GPT-2 would get about every 4th or 5th word/suggestion correct.
 
-Centre the title, author's name(s) and affiliation(s) across
-the page.
-Do not use footnotes for affiliations. Do not include the
-paper ID number assigned during the submission process. 
-Do not include the authors' names or affiliations in the version submitted for review.
+With context, the results improve drastically and the accuracy rates double for both models.  The GPT-2 model benefits the most from the additional information with an absolute improvement of 28.8\% over the model without context, resulting in the best performing model with 52\% accuracy.  On the actual autocompletion task, this equates to predicting every other word correctly.  Note that this metric is pessimistic in that the predicted word must match exactly the word seen in the simple sentence and does not account for other possible words that could be correctly used in the context.
 
-{\bf Title}: Place the title centred at the top of the first page, in
-a 15 pt bold font. (For a complete guide to font sizes and styles,
-see Table~\ref{font-table}.) Long titles should be typed on two lines
-without a blank line intervening. Approximately, put the title at 2.5
-cm from the top of the page, followed by a blank line, then the
-author's names(s), and the affiliation on the following line. Do not
-use only initials for given names (middle initials are allowed). Do
-not format surnames in all capitals (e.g., use ``Schlangen'' not
-``SCHLANGEN'').  Do not format title and section headings in all
-capitals as well except for proper names (such as ``BLEU'') that are
-conventionally in all capitals.  The affiliation should contain the
-author's complete address, and if possible, an electronic mail
-address. Start the body of the first page 7.5 cm from the top of the
-page.
+Table \ref{tab:context_information} shows the output of the GPT-2 model with and without context for simplifying the difficult sentence:
 
-The title, author names and addresses should be completely identical
-to those entered to the electronical paper submission website in order
-to maintain the consistency of author information among all
-publications of the conference. If they are different, the publication
-co-chairs may resolve the difference without consulting with you; so it
-is in your own interest to double-check that the information is
-consistent.
-
-{\bf Abstract}: Type the abstract between addresses and main body.
-The width of the abstract text should be
-smaller than main body by about 0.6 cm on each side.
-Centre the word {\bf Abstract} in a 12 pt bold
-font above the body of the abstract. The abstract should be a concise
-summary of the general thesis and conclusions of the paper. It should
-be no longer than 200 words. The abstract text should be in 11 pt font.
-
-{\bf Text}: Begin typing the main body of the text immediately after
-the abstract, observing the single-column format as shown in 
-the present document. Do not include page numbers.
-
-{\bf Indent} when starting a new paragraph. Use 11 pt for text and 
-subsection headings, 12 pt for section headings and 15 pt for
-the title. 
-
-{\bf Licence}: Include a licence statement as an unmarked (unnumbered)
-footnote on the first page of the final, camera-ready paper.
-See Section~\ref{licence} below for details and motivation.
-
-
-\subsection{Sections}
-
-{\bf Headings}: Type and label section and subsection headings in the
-style shown on the present document.  Use numbered sections (Arabic
-numerals) in order to facilitate cross references. Number subsections
-with the section number and the subsection number separated by a dot,
-in Arabic numerals. Do not number subsubsections.
-
-{\bf Citations}: Citations within the text appear in parentheses
-as~\cite{Gusfield:97} or, if the author's name appears in the text
-itself, as Gusfield~\shortcite{Gusfield:97}.  Append lowercase letters
-to the year in cases of ambiguity.  Treat double authors as
-in~\cite{Aho:72}, but write as in~\cite{Chandra:81} when more than two
-authors are involved. Collapse multiple citations as
-in~\cite{Gusfield:97,Aho:72}. Also refrain from using full citations
-as sentence constituents. We suggest that instead of
-\begin{quote}
-  ``\cite{Gusfield:97} showed that ...''
-\end{quote}
-you use
-\begin{quote}
-``Gusfield \shortcite{Gusfield:97}   showed that ...''
-\end{quote}
-
-If you are using the provided \LaTeX{} and Bib\TeX{} style files, you
-can use the command \verb|\newcite| to get ``author (year)'' citations.
-
-As reviewing will be double-blind, the submitted version of the papers
-should not include the authors' names and affiliations. Furthermore,
-self-references that reveal the author's identity, e.g.,
-\begin{quote}
-``We previously showed \cite{Gusfield:97} ...''  
-\end{quote}
-should be avoided. Instead, use citations such as 
-\begin{quote}
-``Gusfield \shortcite{Gusfield:97}
-previously showed ... ''
-\end{quote}
-
-\textbf{Please do not use anonymous citations} and do not include
-any of the following when submitting your paper for review:
-acknowledgements, project names, grant numbers, and names or URLs of
-resources or tools that have only been made publicly available in
-the last 3 weeks or are about to be made public and would compromise the anonymity of the submission.
-Papers that do not
-conform to these requirements may be rejected without review.
-These details can, however, be included in the camera-ready, final paper.
-
-In \LaTeX{}, for an anonymized submission, ensure that {\small\verb|\colingfinalcopy|} at the top of this document is commented out.
-For a camera-ready submission, ensure that {\small\verb|\colingfinalcopy|} at the top of this document is not commented out.
-
-
-\textbf{References}: Gather the full set of references together under
-the heading {\bf References}; place the section before any Appendices,
-unless they contain references. Arrange the references alphabetically
-by first author, rather than by order of occurrence in the text.
-Provide as complete a citation as possible, using a consistent format,
-such as the one for {\em Computational Linguistics\/} or the one in the 
-{\em Publication Manual of the American 
-Psychological Association\/}~\cite{APA:83}.  Use of full names for
-authors rather than initials is preferred.  A list of abbreviations
-for common computer science journals can be found in the ACM 
-{\em Computing Reviews\/}~\cite{ACM:83}.
-
-The \LaTeX{} and Bib\TeX{} style files provided roughly fit the
-American Psychological Association format, allowing regular citations, 
-short citations and multiple citations as described above.
-
+\vspace{-0.1in}
 \begin{itemize}
-	\item Example citing an arxiv paper: \cite{rasooli-tetrault-2015}. 
-	\item Example article in journal citation: \cite{Aho:72}.
-	\item Example article in proceedings: \cite{borsch2011}.
+    \item[] \textit{Each pseudostem can produce a single bunch of bananas.}
 \end{itemize}
 
-{\bf Appendices}: Appendices, if any, directly follow the text and the
-references (but see above).  Letter them in sequence and provide an
-informative title: {\bf Appendix A. Title of Appendix}.
+\vspace{-0.1in}
 
-\subsection{Footnotes}
+\noindent The context-aware version is able to take advantage of the strong overlap between the difficult sentence and the simplified version that is being ``typed''.  The model without context makes reasonable predictions grammatically, but without the content priming the suggestions are poor overall.
 
-{\bf Footnotes}: Put footnotes at the bottom of the page and use 9 pt
-text. They may be numbered or referred to by asterisks or other
-symbols.\footnote{This is how a footnote should appear.} Footnotes
-should be separated from the text by a line.\footnote{Note the line
-separating the footnotes from the text.}
+\begin{table*}[t]
+\centering
+\scalebox{0.85}{%
+\begin{tabular}{l l l l}
+\toprule 
+& \multicolumn{2}{c}{\textbf{GPT-2}} & \\
+\textbf{Typed so far} & \textbf{No Context} & \textbf{Context-Aware} & \textbf{Actual}\\
+\midrule
+A & particle & \textbf{pseudostem} & \textbf{pseudostem} \\
+A pseudostem & was & \textbf{is} & \textbf{is} \\
+A pseudostem is & a & \textbf{able} &  \textbf{able} \\
+A pseudostem is able & \textbf{to} & \textbf{to} & \textbf{to} \\
+A pseudostem is able to & create & \textbf{produce} & \textbf{produce} \\
+A pseudostem is able to produce & \textbf{a} & \textbf{a} & \textbf{a} \\
+A pseudostem is able to produce a & new & \textbf{single} & \textbf{single} \\
+A pseudostem is able to produce a single & photon &\textbf{bunch} & \textbf{bunch} \\
+A pseudostem is able to produce a single bunch & \textbf{of} & \textbf{of} & \textbf{of} \\
+A pseudostem is able to produce a single bunch of & particles & \textbf{bananas} &  \textbf{bananas} \\
+\bottomrule
+\end{tabular}}
+\caption{\label{tab:context_information} Sample output for simplifying the difficult sentence ``\textit{Each pseudostem can produce a single bunch of bananas.}'' using GPT-2 with and without context.  ``Actual'' indicates the word that should be predicted.}
+\vspace{-2mm}
+\end{table*}
 
-\subsection{Graphics}
+\subsection{Understanding model performance}
 
-{\bf Illustrations}: Place figures, tables, and photographs in the
-paper near where they are first discussed, rather than at the end, if
-possible. 
-Colour
-illustrations are discouraged, unless you have verified that  
-they will be understandable when printed in black ink.
+To better understand how the models are performing and how the predictions of the models differ, we broke down the performances of the neural models by part of speech (POS), difficult sentence length, and the number of words typed so far.
 
-{\bf Captions}: Provide a caption for every illustration; number each one
-sequentially in the form:  ``Figure 1. Caption of the Figure.'' ``Table 1.
-Caption of the Table.''  Type the captions of the figures and 
-tables below the body, using 11 pt text.
+\vspace{-1mm}
+\paragraph{POS} Table \ref{tab:POS-results} shows the accuracies broken down by part of speech, where the POS was automatically determined using Stanford CoreNLP  \cite{manning2014corenlp}.  All of the models perform best on non-content bearing words (i.e., ``Other'').  Of the content-bearing words, the models did the best on verbs and the worst on adverbs.  Overall, GPT-2 with context was the best model at predicting content words with all of the accuracies above 40\% except for adverbs, which was 37\%.
 
-Narrow graphics together with the single-column format may lead to
-large empty spaces,
-see for example the wide margins on both sides of Table~\ref{font-table}.
-If you have multiple graphics with related content, it may be
-preferable to combine them in one graphic.
-You can identify the sub-graphics with sub-captions below the
-sub-graphics numbered (a), (b), (c) etc.\ and using 9 pt text.
-The \LaTeX{} packages wrapfig, subfig, subtable and/or subcaption
-may be useful.
+\begin{table}[t]
+\centering
+\scalebox{0.76}{%
+\begin{tabular}{l c c c c c}
+\toprule
+ & & \multicolumn{2}{c}{\textbf{No Context(\%)}} & \multicolumn{2}{c}{\textbf{Context-Aware(\%)}} \\
+ & N & BERT & GPT-2 & BERT & GPT-2\\
+ \midrule
+All words & 696,683 & 22 & 23 & 42 & 52\\
+\midrule
+Nouns & 301,363 & 13 & 15 & 33 & 43\\
+Verbs & 80,180 & 16 & 17 & 39 & 47 \\
+Adverbs & 23,600 & 10 & 9 & 25 & 37\\
+Adjectives & 41,780 & 10 & 11 & 30 & 46\\
+Other & 249,760 & 32 & 31 & 71 & 60 \\
+ \bottomrule
+\end{tabular}}
+\caption{\label{tab:POS-results} Accuracy of the BERT and GPT-2 with and without context by part-of-speech on the test data.}
+\vspace{-2mm}
+\end{table}
+
+%First and most important, the results demonstrate that our approach can be used to simplify text given difficult sentence. The best performance is from GPT-2 (see table \ref{tab:results} line 4 column 3). Our proposed models: using pretrained language models BERT, and GPT-2 outperform baseline performance by 8-10\% given the same amount of information classified as non-context-aware. This also suggests that our approach can be used to provide real-time suggestion for text simplification as opposed to other approaches, which simply replace difficult vocabularies with simpler ones. 
+
+%Our analysis with the parts of speech on the prediction results of our models shows that we achieve highest performance improvement on predicting adjectives of a sentence (318\%) using GPT-2 with context (Table \ref{tab:POS-results}).
+
+%\textbf{Impact of context information:} With context information from normal sentence combined with each input to our model, the performance is improved significantly by 19-21\% (see column Context-Aware in table \ref{tab:results}). This suggests that the contextual information from normal sentence can be used to predict the next word in the simple sentence. Table \ref{tab:context_information} shows an example of GPT-2 predictions with and without context. Combining with normal sentence, it allows our model to learn specific context in need of simplification, resulting better prediction as compared to non-context-aware. Since n-gram models are statistics-based and only allow fix amount of previous words, these models are not applicable for context-aware information. However, the significant differences between non-context-aware and context-aware performances of BERT, and GPT-2 suggests the significant impact of these information on model performance.
+
+\vspace{-1mm}
+\paragraph{Difficult sentence length} Figure \ref{fig:length_based} shows the performance of the context-aware models based on the length of the difficult sentence.  BERT is fairly consistent regardless of the length of the difficult sentence.  Only for very long sentences does the performance drop.  GPT-2 performs poorly on very short sentences, but well for other lengths.  We hypothesize that the training data for GPT-2 (web text) may require more context for the more technical Wikipedia task. 
+
+\begin{figure}[t]
+\center{\includegraphics[width=\linewidth]
+{./images/new_len_fig.png}}
+\caption{\footnotesize \label{fig:length_based} Accuracy for the two context-aware models based on the length of the difficult sentence: very short ($\le 5$ tokens), short ($6-15$), medium ($16-19$), and long ($\ge20$).}
+\vspace{-2mm}
+\end{figure}
+
+\begin{figure}[t]
+\center{\includegraphics[width=\linewidth]
+{./images/new_pos_fig.png}}
+\caption{Accuracy for the two context-aware models based on the number of words typed so far ($i$).}
+\label{fig:position_based}
+\vspace{-2mm}
+\end{figure}
+
+\vspace{-1mm}
+\paragraph{Number of words typed}
+Figure \ref{fig:position_based} shows the performance of the two context-aware models based on how many words of the simplification the model has access to, i.e., $i$.  Early on when the sentence is first being developed, both models struggle.  As more and more words are typed and more context is provided, the accuracy of both models increase, however, GPT-2 improves more rapidly as additional context is provided. Like the difficult sentence length analysis, GPT-2 performs better with more context information.
+
+%concludes our hypothesis that the further we go along the sentence, the better the prediction of next word from our models. From position 1 to position 10, the performance of BERT increases by 5.9\% (35.53\% to 41.43\%) while GPT-2 gains roughly 15\% (39.43\% to 54.56\%). This observation again confirms our hypothesis that GPT can better capture longer context information; however, in this experiment, in the simplified sentence itself. 
+
+%Another important observation from figure \ref{fig:position_based} is that the improvements decrease as we go further along the simplified sentences. Within the first couple words (see Figure \ref{fig:position_based} position 0 to 4), the improvement is larger as composed to the later positions (position 8 to 10). This observation also suggests that the model can quickly learn the context information and make better prediction. Once again, this concludes that our approach can be used to provide real-time suggestion for TS.   
+
+\section{Conclusions}
+
+In this paper we have introduced a new task, text simplification autocompletion.  Unlike most autocomplete tasks, for text simplification, models can be guided by the sentence that the user is simplifying.  We compared two recent neural models, BERT and GPT-2, and showed how the difficult sentence could be incorporated into the prediction process.  Using context resulted in significant increases in performance with the best model, GPT-2 with context, achieving a prediction accuracy of 52\%, getting every other word right.  We hope that this new task will allow for other interesting model adaptations to be explored.
 
 
-\subsection{Licence Statement}
-\label{licence}
+%%%%%%%%%%%%%%%End of content%%%%%%%%%%%%%%%
+% Added it back on for Sponsor Acknowledgements
+%\section*{Acknowledgements}
 
-As in COLING-2014, COLING-2016, and COLING-2018,
-we require that authors license their
-camera-ready papers under a
-Creative Commons Attribution 4.0 International Licence
-(CC-BY).
-This means that authors (copyright holders) retain copyright but
-grant everybody 
-the right to adapt and re-distribute their paper 
-as long as the authors are credited and modifications listed.
-In other words, this license lets researchers use research papers for their research without legal issues.
-Please refer to 
-\url{http://creativecommons.org/licenses/by/4.0/} for the
-licence terms.  
-
-Depending on whether you use British or American English in your
-paper, please include one of the following as an unmarked
-(unnumbered) footnote on page 1 of your paper.
-The \LaTeX{} style file (coling2020.sty) adds a command
-\texttt{blfootnote} for this purpose, and usage of the command is
-prepared in the \LaTeX{} source code (coling2020.tex) at the start
-of Section ``Introduction''.
-
-\begin{itemize}
-    %
-    % % final paper: en-uk version
-    %
-    \item  This work is licensed under a Creative Commons Attribution 4.0 International Licence. Licence details: \url{http://creativecommons.org/licenses/by/4.0/}.
-           
-    %
-    % % final paper: en-us version
-    %
-    \item This work is licensed under a Creative Commons Attribution 4.0 International License. License details: \url{http://creativecommons.org/licenses/by/4.0/}.
-           
-           
-           
-\end{itemize}
-
-We strongly prefer that you licence your paper as the CC license
-above. However, if it is impossible you to use that license, please 
-contact the COLING-2020 publication co-chairs 
-Derek F. Wong (\texttt{derekfw@umac.mo}), Yang Zhao (\texttt{yang.zhao@nlpr.ia.ac.cn}) and
-Liang Huang (\texttt{liang.huang.sh@gmail.com}),
-before you submit your final version of accepted papers. 
-(Please note that this license statement is only related to the final versions of accepted papers. 
-It is not required for papers submitted for review.)
-
-\section{Translation of non-English Terms}
-
-It is also advised to supplement non-English characters and terms
-with appropriate transliterations and/or translations
-since not all readers understand all such characters and terms.
-Inline transliteration or translation can be represented in
-the order of: original-form transliteration ``translation''.
-
-\section{Length of Submission}
-\label{sec:length}
-
-The maximum submission length is 9 pages (A4) of content for long papers and 4 pages (A4) of content for short papers, 
-plus an unlimited number of pages for
-references (for both long and short papers). 
-Authors of accepted papers will be given additional space in
-the camera-ready version to reflect space needed for changes stemming
-from reviewers comments.
-
-Papers that do not
-conform to the specified length and formatting requirements may be
-rejected without review.
-
-\iffalse
-For papers accepted to the main conference, we will invite authors to provide a translation 
-of the title and abstract and a 1-2 page synopsis of the paper in a second 
-language of the authors' choice. Appropriate languages include but are not 
-limited to authors' native languages, languages spoken in the authors' place 
-of affiliation, and languages that are the focus of the research presented.
-\fi
-
-\section*{Acknowledgements}
-
-The acknowledgements should go immediately before the references.  Do
-not number the acknowledgements section. Do not include this section
-when submitting your paper for review.
+%The acknowledgements should go immediately before the references.  Do not number the acknowledgements section. Do not include this section when submitting your paper for review.
 
 % include your own bib file like this:
 \bibliographystyle{coling}
