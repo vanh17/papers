@@ -95,7 +95,7 @@ In this paper, we explore the application of PNLMs to autocompletion models for 
 
 \noindent {1.} We introduce a first-of-its-kind medical data set that pairs English Wikipedia and Simple Wikipedia, which is automatically extracted from the Simple Wikipedia parallel corpus \cite{kauchak2013improving}. The resulting medical corpus has 3.3k sentence pairs, of which an estimated 2.8k are genuinely medical.
 
-\noindent {2.} We also examine the PNLMs on autocompletion task for sentence simplification and provide an initial analysis based on a number of recent models. We show that the additional context of the difficult sentence can be integrated into these models to improve the quality of the suggestions made.  RoBERTa is the best individual model with 62.4\% accuracy (19.4\% above our base-line).
+\noindent {2.} We also examine the PNLMs on autocompletion task for sentence simplification and provide an initial analysis based on a number of recent models. We show that the additional context of the difficult sentence can be integrated into these models to improve the quality of the suggestions made.  RoBERTa is the best individual model with 62.4\% accuracy (12.4\% above our base-line).
 
 \noindent {3.} We introduce the AuTS, the ensemble model that combines adventages of recent PNLMs. Our model outperforms the best single PNLM, RoBERTa, by 2.1\%. Further, to our best knowledge, this ensembling approach is novel and suggests a potential improvements on PNLMs for natural language processing (NLP) downstream tasks.
 
@@ -109,7 +109,9 @@ Autocompletion tools suggest one or more words as the user types that could foll
 
 Given a difficult sentence that a user is trying to simplify, $d_1 d_2 ... d_m$, and the simplification typed so far, $s_1 s_2 ... s_i$, the goal of autocompletion model is to suggest word $s_{i+1}$. To evaluate the quality of the different models, we used the first-of-its-kind medical corpus (see section \ref{sec:medical_corpora}) that we extracted from the Simple Wikipedia parallel corpus \cite{kauchak2013improving}, which contains 167K pairs of sentences. Each pair consists of one sentence from English Wikipedia and a corresponding sentence from Simple English Wikipedia. We used 70\% of the sentence pairs for training, 15\% for development, and 15\% for testing. 
 
-To evaluate the models, we calculated how well the models predicted the next word in a test sentence, given the previous words.  A simple test sentence of length $n$, $s_1 s_2 ... s_n$, would result in $n-1$ predictions, i.e., predict $s_2$ given $s_1$, predict $s_3$ given $s_1 s_2$, etc.  For example, Tabel \ref{tab:medexample} shows a difficult sentence from English Wikipedia and the corresponding simplification from the medical Simple English Wikipedia. Given this test example, we generate 19 \todo{AHMAD: please fix the prediction tasks table and add the final number here} prediction tasks, one for each word in the simple sentence after the first word.  Table \ref{fig:testing} shows these six test prediction tasks.  For the context-aware approaches, a coressponding difficult sentence is concatenated as a prefix for each prediction task. We measured the performance of a system using accuracy based on the number of predictions that exactly matched the next word in the corpus.  The test corpus contained 495 sentence pairs resulting in a total of 7969 individual word predictions.
+To evaluate the models, we calculated how well the models predicted the next word in a test sentence, given the previous words.  A simple test sentence of length $n$, $s_1 s_2 ... s_n$, would result in $n-1$ predictions, i.e., predict $s_2$ given $s_1$, predict $s_3$ given $s_1 s_2$, etc.  For example, Tabel \ref{tab:medexample} shows a difficult sentence from English Wikipedia and the corresponding simplification from the medical Simple English Wikipedia. Given this test example, we generate 19 \todo{AHMAD: please fix the prediction tasks table and add the final number here} prediction tasks, one for each word in the simple sentence after the first word.  Table \ref{fig:testing} shows these six test prediction tasks.  For the context-aware approaches, a coressponding difficult sentence is concatenated as a prefix for each prediction task. We measured the performance of a system using accuracy based on the number of predictions that exactly matched the next word in the corpus.  The test corpus contained 495 sentence pairs resulting in a total of 7969 individual word predictions. 
+
+Note that accuracy-based performance (ABP) is pessimistic in that the predicted word must match exactly the word seen in the simple sentence and does not account for other possible words that could be correctly used in the context. However, since the parallel English Wikipedia corpus does not offer multiple simplified version given a difficult sentence, accuracy is the best metrics that considers both automated scoring and simplification quality, which is crucial to medical domain. Accuracy-based metrics can help offset an expensive manual evaluation while providing the most mimic of how the autocomple systems works. We do not use BLEU \cite{papineni2002bleu} and SARI \cite{xu2016optimizing}, which are widely used in text simplifcation domain, because the two metrics are specifically designed for fully-automated models.
 
 \begin{table}
     \centering
@@ -123,11 +125,11 @@ To evaluate the models, we calculated how well the models predicted the next wor
     sentence &  \\
     \bottomrule
     \end{tabular}}
-    \caption{An example sentence pair from the English Wikipedia corpus.}
+    \caption{An example sentence pair from the English Wikipedia corpus.\todo{AHMAD: after you finished Medical Corpora part, please fix this table with a medical example.}}
     \label{tab:testexample}
 \end{table}
 
-\todo{AHMAD: after you finished Medical Corpora part, please fix this table with a medical example.}
+
 \begin{table}
 \centering
 \scalebox{0.9}{%
@@ -142,28 +144,8 @@ Banbury is part of the & Cherwell \\
 Banbury is part of the Cherwell & district \\
 \bottomrule
 \end{tabular}}
-\caption{The resulting prediction tasks that are generated from the example in Table \ref{tab:testexample}.}
+\caption{The resulting prediction tasks that are generated from the example in Table \ref{tab:testexample}. \todo{AHMAD: after you finished Medical Corpora part, please fix this table with a medical example.}}
 \label{fig:testing}
-\end{table}
-
-\begin{table}[t]
-\centering
-\scalebox{0.87}{%
-\begin{tabular}{c c c }
-\toprule
-\textbf {Model} &\textbf{No Context} & \textbf {Context-Aware}\\ 
-\midrule
-RoBERTa & 56.23\% & \textbf{62.4}\% \\
-\midrule
-BERT & 53.28\% & 50.43\% \\
-\midrule
-XLNet & 46.2\% & 45.7\% \\
-\midrule
-GPT-2 & 23.2\% & 49\% \\
-\bottomrule
-\end{tabular}}
-\caption{Accuracy for the different models on the Wikipedia test corpus of 450 sentence pairs.  Context-aware approaches included the context of the difficult sentence when predicting.} 
-\label{tab:results}
 \end{table}
 
 In this work, we examined four recent PNLMs that utilize the Transformer network \cite{vaswani2017attention}: BERT \cite{devlin2018bert}, RoBERTa \cite{liu2019roberta}, XLNet \cite{yang2019xlnet}, and GPT-2 \cite{radford2019language} and the AutoASMeT ensemble models, which combines the advantages of the transformer-based models.
@@ -180,7 +162,7 @@ We examined four PNLMs based on Transformers network: BERT, RoBERTa, XLNet, GPT-
 
 BERT (Bidirectional Encoder Representations from Transformers) is a method for learning language representations using bidirectional training.BERT has been shown to produce state-of-the-art results in a wide range of generation and classification applications \cite{devlin2018bert}. In this work, we use the base original BERT model pre-trained on the BooksCorpus \cite{zhu2015aligning} and English Wikipedia. We finetuned the pytorch BERT implemented by the huggingface\footnote{\url{https://github.com/huggingface/bert/}}. The BERT fine-tuning was done with a batch-size of 8, 8 epochs, and a learning rate of $5e^{-5}$. Early stopping was used based on the second time a decrease in the accuracy was seen.
 
-\subsubsection{RoBERTa} \comment{HOANG}
+\subsubsection{RoBERTa}
 
 RoBERTa is A Robustly Optimized BERT Pretraining Approach. The RoBERTa uses the same model architecture as BERT. However, the differences between RoBERTa and BERT are that RoBERTa does not use Next Sentence Prediction during pre-trainining and RoBERTa uses larger mini-batch size. We used the publicly released base RoBERTa with 125M parameters model \footnote{\url{https://github.com/huggingface/roberta}}. The RoBERTa fine-tuning was done with a batch-size of 8, 8 epochs, and a learning rate of $5e^{-5}$. Early stopping policy was also similar to BERT fine-tuning.
 
@@ -192,7 +174,7 @@ XLNet is a generalized autoregressive pretraining method. Like BERT, XLNet benef
 
 Like BERT, GPT-2 is also based on the Transformer network, however, GPT-2 uses unidirectional left-to-right pretraining process. We use the publicly released model\footnote{\url{https://github.com/openai/gpt-2}}, which has 124M parameters and is trained on web text. The GPT-2 fine-tuning was done with a batch-size of 8, 8 epochs, and a learning rate of $5e^{-5}$. Early stopping policy was also similar to BERT fine-tuning.
 
-\subsection{Ensembling Models}
+\subsection{Ensemble Models} \label{sec:ensemble}
 
 By combining adventages of four PNLMs, we examined four ensembling approaches and reported their performance in section \ref{sec:results}. Our best ensemling model AutoASMeT, which uses neural trained hypothesis selection mechanism, outperforms the best single PNLM by 2.1\%. 
 
@@ -300,59 +282,38 @@ To see how well the AutoASMeT model perform, we examine the upper bound, which i
 
 \section{Results} \label{sec:results}
 
-We provide the first results on this task using BERT, RoBERTa, XLNet, and GPT-2, with and without context, as well as an no-fine-tuned BERT as a baseline. We provide an initial analysis of model performance and use it to design the AuTS, which is an ensemble model which combines advantages of each PNLM.
+We provide the results on the first autocomple models in simplifying medical text which use BERT, RoBERTa, XLNet, and GPT-2 with a no-fine-tuned BERT as a baseline. We provide an initial analysis of transformer-based language model performances and use them to design the ensembling models in section \ref{sec:ensemble}, which combines advantages of each PNLM.
 
-\subsection{Experimental setup}
+\subsection{Transformer-based Language Models}
 
+To better understand the advantages of each PNLMs, we examine the model performance follow the four criterias: general performance, part-of-speech (POS), number of words typed, performance on predicting next K words. Due to the application of the autocompletion approach to real-time usages, we also provide the accuracy@N. Note that ABP is pessimistic in that the predicted word must match exactly the word seen in the simple sentence and does not account for other possible words that could be correctly used in the context. However, since the parallel English Wikipedia corpus does not offer multiple simplified version given a difficult sentence, accuracy is the best metrics that considers both automated scoring and simplification quality, which is crucial to medical domain. 
 
+\paragraph{Accuracy:} Table \ref{tab:results} shows the results for the five different variants (baseline, RoBERTa, BERT, XLNet, and GPT-2 with and without context). Among PNLMs, the RoBERTa is the best model. One of the interesting point to point out is that RoBERTa, XLNet, BERT has a very small improvement with context while GPT-2 gains a large absolute improvement with context. Across all the model, the fine-tuned performance is well above a baseline, which suggests fine-tuning helps models learn specific domain knowledge. Additional context of the difficult sentence benefits the model significantly. We hypothesize that additional context prevents the model from semantic drift, therefore, improves the performance. The best performance is $62.4\%$ implying that this direction of research is open to new advancement.
 
-As an additional baseline that does not use context, we trained a trigram language model with Kneser-Ney smoothing using the SRILM toolkit \cite{stolcke2002srilm}.  The model was trainined on the simple sentences from the training portion of the dataset and predicts $s_{i+1}$ as the word with the highest probability given the previous two words, i.e., $argmax_{s_{i+1}}\mbox{ } p(s_{i+1}| s_i s_{i-1})$.
-
-
-
-\todo{Add RoBERTa, XLNet, GPT-2 fintuning set up here}
-
-\subsection{Prediction performance}
-Table \ref{tab:results} shows the results for the five different variants (trigram model, BERT and GPT-2 with and without context).  Both neural models significantly outperform the trigram language model; they have been trained on larger corpora and have access to more context allowing for better predictions.  Without context, GPT-2 performs slightly better than BERT, with an absolute improvement of 1.7\%.  To put these accuracy numbers in perspective, in an actual autocomplete task, without context, both BERT and GPT-2 would get about every 4th or 5th word/suggestion correct.
-
-With context, the results improve drastically and the accuracy rates double for both models.  The GPT-2 model benefits the most from the additional information with an absolute improvement of 28.8\% over the model without context, resulting in the best performing model with 52\% accuracy.  On the actual autocompletion task, this equates to predicting every other word correctly.  Note that this metric is pessimistic in that the predicted word must match exactly the word seen in the simple sentence and does not account for other possible words that could be correctly used in the context.
-
-Table \ref{tab:context_information} shows the output of the GPT-2 model with and without context for simplifying the difficult sentence:
-
-\begin{itemize}
-    \item[] \textit{Each pseudostem can produce a single bunch of bananas.}
-\end{itemize}
-
-\noindent The context-aware version is able to take advantage of the strong overlap between the difficult sentence and the simplified version that is being ``typed''.  The model without context makes reasonable predictions grammatically, but without the content priming the suggestions are poor overall.
-
-\begin{table*}[t]
+\begin{table}[t]
 \centering
-\scalebox{0.85}{%
-\begin{tabular}{l l l l}
-\toprule 
-& \multicolumn{2}{c}{\textbf{GPT-2}} & \\
-\textbf{Typed so far} & \textbf{No Context} & \textbf{Context-Aware} & \textbf{Actual}\\
+\scalebox{0.87}{%
+\begin{tabular}{l c c }
+\toprule
+\textbf {Model} &\textbf{No Context} & \textbf {Context-Aware}\\ 
 \midrule
-A & particle & \textbf{pseudostem} & \textbf{pseudostem} \\
-A pseudostem & was & \textbf{is} & \textbf{is} \\
-A pseudostem is & a & \textbf{able} &  \textbf{able} \\
-A pseudostem is able & \textbf{to} & \textbf{to} & \textbf{to} \\
-A pseudostem is able to & create & \textbf{produce} & \textbf{produce} \\
-A pseudostem is able to produce & \textbf{a} & \textbf{a} & \textbf{a} \\
-A pseudostem is able to produce a & new & \textbf{single} & \textbf{single} \\
-A pseudostem is able to produce a single & photon &\textbf{bunch} & \textbf{bunch} \\
-A pseudostem is able to produce a single bunch & \textbf{of} & \textbf{of} & \textbf{of} \\
-A pseudostem is able to produce a single bunch of & particles & \textbf{bananas} &  \textbf{bananas} \\
+Baseline & 17.25\% & 40.42\% \\
+\midrule
+RoBERTa & 56.23\% & \textbf{62.4}\% \\
+\midrule
+BERT & 50.43\% & 53.28\% \\
+\midrule
+XLNet & 45.7\% & 46.2\% \\
+\midrule
+GPT-2 & 23.2\% & 49\% \\
 \bottomrule
 \end{tabular}}
-\caption{\label{tab:context_information} Sample output for simplifying the difficult sentence ``\textit{Each pseudostem can produce a single bunch of bananas.}'' using GPT-2 with and without context.  ``Actual'' indicates the word that should be predicted.}
-\end{table*}
+\caption{Accuracy for the different models on the Wikipedia test corpus of 450 \todo{AHMAD: check this if the number is same as yours} sentence pairs.  Context-aware approaches included the context of the difficult sentence when predicting.} 
+\label{tab:results}
+\end{table}
 
-\subsection{Understanding model performance}
 
-To better understand how the models are performing and how the predictions of the models differ, we broke down the performances of the neural models by part of speech (POS), difficult sentence length, the number of words typed so far. Due to the application of the autocompletion approach to real-time usages, we also provide the accuracy @ N.
-
-\paragraph{POS} Table \ref{tab:POS-results} shows the accuracies broken down by part of speech, where the POS was automatically determined using Stanford CoreNLP  \cite{manning2014corenlp}.  All of the models perform best on non-content bearing words (i.e., ``Other'').  Of the content-bearing words, the models did the best on verbs and the worst on adverbs.  Overall, GPT-2 with context was the best model at predicting content words with all of the accuracies above 40\% except for adverbs, which was 37\%.
+\paragraph{POS:} Table \ref{tab:POS-results} shows the ABP by POS, where the POS was automatically determined by Stanford CoreNLP \cite{manning2014corenlp}. All of the models perform best on non-content bearing words (i.e., ``Other'').  Of the content-bearing words, the models did the best on noun and verbs and the worst on proper nouns.  RoBERTa outperforms all other models in all POS.
 
 \begin{table}[t]
 \centering
@@ -374,33 +335,27 @@ PropNoun & 25.8 & 21.8 & 17.9 & 34 \\
 \caption{\label{tab:POS-results} Accuracy of the RoBERTa, BERT, XLNet, and GPT-2 with and without context by part-of-speech on the test data.}
 \end{table}
 
-%First and most important, the results demonstrate that our approach can be used to simplify text given difficult sentence. The best performance is from GPT-2 (see table \ref{tab:results} line 4 column 3). Our proposed models: using pretrained language models BERT, and GPT-2 outperform baseline performance by 8-10\% given the same amount of information classified as non-context-aware. This also suggests that our approach can be used to provide real-time suggestion for text simplification as opposed to other approaches, which simply replace difficult vocabularies with simpler ones. 
+%\paragraph{Difficult sentence length} Figure \ref{fig:length_based} shows the performance of the context-aware models based on the length of the difficult sentence.  BERT is fairly consistent regardless of the length of the difficult sentence.  Only for very long sentences does the performance drop.  GPT-2 performs poorly on very short sentences, but well for other lengths.  We hypothesize that the training data for GPT-2 (web text) may require more context for the more technical Wikipedia task. 
 
-%Our analysis with the parts of speech on the prediction results of our models shows that we achieve highest performance improvement on predicting adjectives of a sentence (318\%) using GPT-2 with context (Table \ref{tab:POS-results}).
-
-%\textbf{Impact of context information:} With context information from normal sentence combined with each input to our model, the performance is improved significantly by 19-21\% (see column Context-Aware in table \ref{tab:results}). This suggests that the contextual information from normal sentence can be used to predict the next word in the simple sentence. Table \ref{tab:context_information} shows an example of GPT-2 predictions with and without context. Combining with normal sentence, it allows our model to learn specific context in need of simplification, resulting better prediction as compared to non-context-aware. Since n-gram models are statistics-based and only allow fix amount of previous words, these models are not applicable for context-aware information. However, the significant differences between non-context-aware and context-aware performances of BERT, and GPT-2 suggests the significant impact of these information on model performance.
-
-\paragraph{Difficult sentence length} Figure \ref{fig:length_based} shows the performance of the context-aware models based on the length of the difficult sentence.  BERT is fairly consistent regardless of the length of the difficult sentence.  Only for very long sentences does the performance drop.  GPT-2 performs poorly on very short sentences, but well for other lengths.  We hypothesize that the training data for GPT-2 (web text) may require more context for the more technical Wikipedia task. 
-
-\begin{figure}[t]
-\center{\includegraphics[width=\linewidth]
-{./images/new_len_fig.png}}
-\caption{\footnotesize \label{fig:length_based} Accuracy for the two context-aware models based on the length of the difficult sentence: very short ($\le 5$ tokens), short ($6-15$), medium ($16-19$), and long ($\ge20$).}
-\end{figure}
+%\begin{figure}[t]
+%\center{\includegraphics[width=\linewidth]
+%{./images/new_len_fig.png}}
+%\caption{\footnotesize \label{fig:length_based} Accuracy for the two context-aware models based on the length of the difficult sentence: very short ($\le 5$ tokens), short ($6-15$), medium ($16-19$), and long ($\ge20$).}
+%\end{figure}
 
 \begin{figure}[t]
-\center{\includegraphics[width=\linewidth]
+\center{\includegraphics[scale=0.8]
 {./images/new_pos_fig.png}}
 \caption{Accuracy for the two context-aware models based on the number of words typed so far ($i$).}
 \label{fig:position_based}
 \end{figure}
 
 \paragraph{Number of words typed}
-Figure \ref{fig:position_based} shows the performance of the two context-aware models based on how many words of the simplification the model has access to, i.e., $i$.  Early on when the sentence is first being developed, both models struggle.  As more and more words are typed and more context is provided, the accuracy of both models increase, however, GPT-2 improves more rapidly as additional context is provided. Like the difficult sentence length analysis, GPT-2 performs better with more context information.
+Figure \ref{fig:position_based} shows the performance of the context-aware models based on how many words of the simplification the model has access to, i.e.,$i$. Early on when the sentence is first being developed, all models struggle. As more and more words are typed, the accuracy of all models increase. The increases in accuracy starts to drop as the curves are flatten.
 
 \paragraph{Accuracy@N}
 
-Table \ref{tab:accuracy-@-n} shows the accuracy@N from RoBERTa, BERT, XLNet models on next word prediction. Accuracy@N is a metric that gives a model credit as long as it can provide accurate prediction within its k suggestions. As we can see from here, this relaxing schema helps the models better assist technician because the user can pick the best word in the list of suggestion and therefore can help speed up the process and improve model performance.
+Table \ref{tab:accuracy-@-n} shows the accuracy@N from PNLMs on next word prediction. Accuracy@N is a metric that gives a model credit as long as it can provide accurate prediction within the first k suggestions. This relaxing schema helps the models better assist medical technician (a 6-10.8\% increase in accuracy) because the user can pick the best word in the list of suggestions and therefore can help improve the simplification quality.
 
 \begin{table}[t]
 \centering
@@ -417,56 +372,59 @@ accuracy@6 & 73.2 & 59.4 & 53.5 \\
 accuracy@7 & 73.2 & 59.4 & 53.5 \\
  \bottomrule
 \end{tabular}}
-\caption{\label{tab:accuracy-@-n} Accuracy @ N of the RoBERTa, BERT, and XLNet with context on next word prediction}
+\caption{\label{tab:accuracy-@-n} Accuracy @ N of the RoBERTa, BERT, and XLNet with context on next word prediction \todo{Add GPT-2}}
 \end{table}
 
-\paragraph{Performance on predicting next K words}
+%\paragraph{Performance on predicting next K words}
 
-Table \ref{tab:next-k-results} show results from four neural network models in predicting the next k words. To further understand how performance affected by the more words it needs to predict, I run experiments with predicting next 1, 2, 3, and 4 words. This idea is the same with the Google email text suggestion when the model suggest multiple words at a time. As more words need to be predicted, the performance drop significantly for the medical domain. This confirms that the task is unsolved and open for researches to further advance the autocompletion system in medical text simplification.
+%Table \ref{tab:next-k-results} show results from four neural network models in predicting the next k words. To further understand how performance affected by the more words it needs to predict, I run experiments with predicting next 1, 2, 3, and 4 words. This idea is the same with the Google email text suggestion when the model suggest multiple words at a time. As more words need to be predicted, the performance drop significantly for the medical domain. This confirms that the task is unsolved and open for researches to further advance the autocompletion system in medical text simplification.
+
+%\begin{table}[t]
+%\centering
+%\scalebox{.9}{%
+%\begin{tabular}{l c c c c c}
+%\toprule
+% & RoBERTa & BERT & XLNet & GPT-2 & \\
+% \midrule
+%Next 1 &  62.4 & 53.28 & 46.2 & 49 \\
+%Next 2 & 45.1 & 38.7 & 33.5 & 41 \\
+%Next 3 & 36.8 & 31.5 & 26.7 & 31 \\
+%Next 4 & 31.5 & 24.2 & 21 & 14 \\
+% \bottomrule
+%\end{tabular}}
+%\caption{\label{tab:next-k-results} Accuracy of the RoBERTa, BERT, XLNet, and GPT-2 with context on next k prediction}
+%\end{table}
 
 \begin{table}[t]
 \centering
 \scalebox{.9}{%
-\begin{tabular}{l c c c c c}
+\begin{tabular}{l c c}
 \toprule
- & RoBERTa & BERT & XLNet & GPT-2 & \\
+ Model & No Context & Context-Aware \\
  \midrule
-Next 1 &  62.4 & 53.28 & 46.2 & 49 \\
-Next 2 & 45.1 & 38.7 & 33.5 & 41 \\
-Next 3 & 36.8 & 31.5 & 26.7 & 31 \\
-Next 4 & 31.5 & 24.2 & 21 & 14 \\
+RoBERTa & 56.23\% & 62.40\% \\
+ \midrule
+Majority Vote & 36.75 & 43.25\% \\
+ \midrule
+4CC & 52.27\% & 59.32\% \\
+ \midrule
+AutoASMeT & 57.89\% & 64.52\% \\
+ \midrule
+Upperbound & 60.22\% & 66.44\% \\
  \bottomrule
 \end{tabular}}
-\caption{\label{tab:next-k-results} Accuracy of the RoBERTa, BERT, XLNet, and GPT-2 with context on next k prediction}
+\caption{\label{tab:ensembleResults} ABP of the ensemble models}
 \end{table}
+\subsection{Ensemble Models}
 
-\begin{table}[t]
-\centering
-\scalebox{.9}{%
-\begin{tabular}{l c}
-\toprule
- Model & Accuracy \\
- \midrule
-Majority Vote & 43.25\% \\
- \midrule
-4 Class Classification & 56.45\% \\
- \midrule
-Combined Class Classification & 59.3\% \\
- \midrule
-AuTS & 64.52\% \\
- \midrule
-Upperbound & 66.44\% \\
- \bottomrule
-\end{tabular}}
-\caption{\label{tab:ensembleResults} Accuracy of the majority vote, 4-class classification, combined class classification, AuTS, and the upperbound of ensemble models.}
-\end{table}
+Table \ref{tab:ensembleResults} shows that AutoASMeT approach works on combining advantages of PNLMs. The best AutoASMeT model outperforms the best single PNLM by 2.1\% and 1.92\% from the upper bound. The result proves our hypothesis that reducing bias in training data for model selector can benefit the ensemble model and increase simplification quality.
 %concludes our hypothesis that the further we go along the sentence, the better the prediction of next word from our models. From position 1 to position 10, the performance of BERT increases by 5.9\% (35.53\% to 41.43\%) while GPT-2 gains roughly 15\% (39.43\% to 54.56\%). This observation again confirms our hypothesis that GPT can better capture longer context information; however, in this experiment, in the simplified sentence itself. 
 
 %Another important observation from figure \ref{fig:position_based} is that the improvements decrease as we go further along the simplified sentences. Within the first couple words (see Figure \ref{fig:position_based} position 0 to 4), the improvement is larger as composed to the later positions (position 8 to 10). This observation also suggests that the model can quickly learn the context information and make better prediction. Once again, this concludes that our approach can be used to provide real-time suggestion for TS.   
 
 \section{Conclusions}
 
-In this paper we have introduced a first-of-its-kind medical corpus for text simplification and proposed new task, text simplification with autocompletion.  Unlike most autocomplete tasks, for text simplification, models can be guided by the sentence that the user is simplifying.  We compared four recent PNMLs BERT, RoBERTa, XLNet, and GPT-2, and showed how the difficult sentence could be incorporated into the prediction process. Using context resulted in significant increases in performance with the best model, RoBERTa with context, achieving a prediction accuracy of 62.4\%, getting every other word right. With an intial analysis, we designed the AuTS model, which is an ensemble model that combines adventages of PNLMs and outperforms RoBERTa by 2.1\%. We hope that this new task will allow for other interesting model adaptations to be explored.
+In this paper, we introduced a first-of-its-kind medical parallel English Wikipedia corpus for text simplification and proposed new application of PNLMs in text simplification with autocompletion. The autocomple model for TS can assist users to simplify text with higher efficiency and quality in domains, such as healthcare and medicine where fully-automated approaches are proved to be ineffective. We examined four recent PNMLs BERT, RoBERTa, XLNet, and GPT-2, and showed how the difficult sentence could be incorporated into the prediction process. By combininig advantages of PNLMs, we designed the ensemble AutoASMeT model which outperforms the best single PNLM, RoBERTa, by 2.1\%.
 
 
 %%%%%%%%%%%%%%%End of content%%%%%%%%%%%%%%%
